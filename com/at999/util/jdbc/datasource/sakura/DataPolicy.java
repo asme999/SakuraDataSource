@@ -10,13 +10,13 @@ public interface DataPolicy{
 
 	DataPolicy defaultPolicy = SakuraDataPolicy.newInstance();
 
-	default void executePreGetPolicy(DataAccessInfo info, SakuraRestrictedPool pool){}
+	default void executePreGetPolicy(DataAccessInfo info){}
 
-	default void executePostGetPolicy(DataAccessInfo info, SakuraRestrictedPool pool){}
+	default void executePostGetPolicy(DataAccessInfo info){}
 
-	default Connection executeOverNotFoundPolicy(DataAccessInfo info, SakuraRestrictedPool pool)
-			throws ClassNotFoundException, SQLException{
-		return pool.tagUsage(pool.getPoint(), cast(pool.wireConnection(pool.getPoint()), Connection.class), true);
+	default Connection executeOverNotFoundPolicy(DataAccessInfo info) throws ClassNotFoundException, SQLException{
+		SakuraRestrictedPool srp = info.getConnectionPool();
+		return pool.tagUsage(srp.getPoint(), cast(srp.wireConnection(srp.getPoint()), Connection.class), true);
 	}
 
 	default <T> T cast(Object o, Class<T> c){ return c.cast(o); }

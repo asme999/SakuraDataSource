@@ -1,7 +1,9 @@
 package com.at999.util.jdbc.datasource.sakura;
 
 import com.at999.util.jdbc.datasource.sakura.DataAccess;
+import com.at999.util.jdbc.datasource.sakura.DataStatus;
 import java.util.LinkedList;
+import java.sql.Connection;
 
 public interface DataAccessInfo{
 
@@ -17,7 +19,11 @@ public interface DataAccessInfo{
 
 	int getCount();
 
+	SakuraRestrictedPool getConnectionPool();
+
 /*
+	HashMap<Connection, SakuraDataStatus> getConnectionPool();
+
 	void count(boolean up);
 */
 

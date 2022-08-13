@@ -2,7 +2,11 @@ package com.at999.util.jdbc.datasource.sakura.pool;
 
 import com.at999.util.jdbc.datasource.sakura.DataPolicy;
 import com.at999.util.jdbc.datasource.sakura.DataAccess;
+import com.at999.util.jdbc.datasource.sakura.DataStatus;
 import com.at999.util.jdbc.datasource.sakura.DataAccessInfo;
+import com.at999.util.jdbc.datasource.sakura.status.SakuraDataStatus;
+import com.at999.util.jdbc.datasource.sakura.pool.SakuraRestrictedPool;
+import com.at999.util.jdbc.datasource.sakura.proxy.SakuraProxyConnection;
 import java.sql.DriverManager;
 import java.sql.Connection;
 import java.util.HashMap;
@@ -13,7 +17,7 @@ import java.sql.SQLFeatureNotSupportedException;
 
 public class SakuraDataPool implements DataAccess{
 
-	protected HashMap<DataAccess, HashMap<Connection, Boolean>> pool;
+	protected HashMap<DataAccess, HashMap<Connection, DataStatus>> pool;
 
 	protected DataAccess point;
 
@@ -41,10 +45,11 @@ public class SakuraDataPool implements DataAccess{
 		this.pool.put(da, new HashMap<>());
 		da.getDataAccessInfo().getStartInitialzeTime();
 		for(int i = 0; i < size; i++)
-			if(tagUsage(da, wireConnection(da), false) == null)
+			if(tagUsage(da, wireConnection(da), new SakuraDataStatus()) == null)
 				throw new NullPointerException();
 		da.getDataAccessInfo().getFinishInitialzeTime();
 		da.getDataAccessInfo().setCount(size);
+		da.getDataAccessInfo().setConnectionPool(new SakuraRestrictedPool(da, this.pool.get(da)));
 	}
 
 	public Connection tagUsage(DataAccess da, Connection con, boolean using){
@@ -65,6 +70,10 @@ public class SakuraDataPool implements DataAccess{
 		return DriverManager.getConnection(da.getUrl(), da.getUsername(), da.getPassword());
 	}
 
+	public Connection wireConnection(DataAccess da, boolean original){
+		
+	}
+
 	public Connection getConnection(DataAccess da) throws NullPointerException, ClassNotFoundException, SQLException{
 		if(da == null)
 			throw new NullPointerException();
@@ -81,7 +90,8 @@ public class SakuraDataPool implements DataAccess{
 		if(this.point != da && direcation)
 			this.point = da;
 		if(!this.pool.containsKey(da))
-			initialPreconnect(da, size);
+			if(!findAccess(da.getDriver(), da.getUrl(), da.getUsername(), null))
+				initialPreconnect(da, size);
 		return this;
 	}
 
@@ -110,14 +120,20 @@ public class SakuraDataPool implements DataAccess{
 		HashMap<Connection, Boolean> pool = this.pool.get(da);
 		if(pool == null)
 			throw new NullPointerException();
+		Connection connection = null;
 		if(!da.getDataPolicy().isDefaultPolicy(da.getDataPolicy()))
-			da.getDataPolicy().executePreGetPolicy(da.getDataAccessInfo(), new SakuraRestrictedPool(da, pool));
-		for(Connection con : pool.keySet())
-			if(!pool.get(con))
-				return con;
+			da.getDataPolicy().executePreGetPolicy(da.getDataAccessInfo());
+		for(Connection con : pool.keySet()){
+			if(pool.get(con).usable()){
+				connection = con;
+				break;
+			}
+		}
 		if(!da.getDataPolicy().isDefaultPolicy(da.getDataPolicy()))
-			da.getDataPolicy().executePostGetPolicy(da.getDataAccessInfo(), new SakuraRestrictedPool(da, pool));
-		return da.getDataPolicy().executeOverNotFoundPolicy(da.getDataAccessInfo(), new SakuraRestrictedPool(da, pool));
+			da.getDataPolicy().executePostGetPolicy(da.getDataAccessInfo());
+		if(connection == null)
+			return da.getDataPolicy().executeOverNotFoundPolicy(da.getDataAccessInfo());
+		return connection;
 	}
 
 	public boolean verifyAccess(String username, String password) throws NullPointerException{
@@ -158,6 +174,24 @@ public class SakuraDataPool implements DataAccess{
 		else
 			res = false;
 		return res;
+	}
+
+	public boolean findAccess(String driver, String url, String username, String password){
+		boolean and = true;
+		if(this.pool.isEmpty())
+			and = false;
+		for(DataAccess tda : this.pool.keySet()){
+			if(driver != null && !tda.getDriver().equals(driver))
+				and = false;
+			if(and && url != null && !tda.getUrl().equals(url))
+				and = false;
+			if(and && username != null && !tda.getUsername().equals(username))
+				and = false;
+			if(and && password != null && !tda.getPassword().equals(password)){
+				and = false;
+			}
+		}
+		return and;
 	}
 
 	@Override

@@ -123,7 +123,7 @@ public class SakuraDataPool implements DataAccess{
 	public boolean verifyAccess(String username, String password) throws NullPointerException{
 		if(username == null || password == null)
 			throw new NullPointerException();
-		return getUsername().equals(username) && getPassword().equals(password);
+		return verifyAccess(null, null, username, password);
 	}
 
 	public boolean verifyAccess(String driver, String url, String username, String password){
@@ -139,7 +139,12 @@ public class SakuraDataPool implements DataAccess{
 		return or;
 	}
 
-	public boolean verifyAccess(DataAccess da, boolean together){
+	public boolean verifyAccess(DataAccess da){
+		return verifyAccess(da.getDriver(), da.getUrl(), da.getUsername(), da.getPassword());
+	}
+
+	public boolean verifyAccess(DataAccess da, boolean together)
+			throws NullPointerException, ClassNotFoundException, SQLException{
 		if(da == null)
 			throw new NullPointerException();
 		boolean res = true;
@@ -149,7 +154,7 @@ public class SakuraDataPool implements DataAccess{
 			if(together)
 				this.pool.put(da, this.pool.get(da));
 			else
-				res = true;
+				use(da, da.getDefaultSize(), false);
 		else
 			res = false;
 		return res;

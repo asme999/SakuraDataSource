@@ -9,26 +9,31 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 
-public class SakuraDataSource implements DataSource{
+public class SakuraDataSource extends SakuraDataPool implements DataSource{
 
-	private SakuraDataPool sdp;
+//	private SakuraDataPool sdp;
 	
 	public SakuraDataSource(){
-		init();
+			super.init();
 	}
 
 	public SakuraDataSource(DataAccess da){
-		init(da);
-	}
-
-	public SakuraDataSource(String driver, String url, String username, String password){
 		try{
-			init(new SakuraDataAccess(driver, url, username, password));
+			super.init(da);
 		}catch(Exception e){
 			e.printStackTrace();
 		}
 	}
 
+	public SakuraDataSource(String driver, String url, String username, String password){
+		try{
+			super.init(new SakuraDataAccess(driver, url, username, password));
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+
+/*
 	private void init(DataAccess da){
 		this.sdp = new SakuraDataPool(da);
 	}
@@ -38,22 +43,23 @@ public class SakuraDataSource implements DataSource{
 	}
 
 	public DataAccess currentDataAccess(){
-		return this.sdp.getPoint();
+		return super.getPoint();
 	}
 
 	public boolean isHere(DataAccess da){
-		return this.sdp.isPoint(da);
+		return super.isPoint(da);
 	}
+*/
 
 	public Connection getConnection(DataAccess da) throws ClassNotFoundException, SQLException{
-		return this.sdp.use(da, false);
+		return super.use(da, false);
 	}
 
 	@Override
 	public Connection getConnection() throws SQLException{
 		Connection con = null;
 		try{
-			con = this.sdp.getConnection();
+			con = super.getPoolConnection();
 		}catch(ClassNotFoundException e){
 			e.printStackTrace();
 		}
@@ -62,73 +68,73 @@ public class SakuraDataSource implements DataSource{
 
 	@Override
 	public Connection getConnection(String username, String password) throws SQLException{
-		if(!this.sdp.verifyAccess(username, password)){
-			try{
-				return this.sdp.use(
-						new SakuraDataAccess(this.sdp.getDriver(), this.sdp.getUrl(), username, password)
-						, false);
-			}catch(ClassNotFoundException e){
-				e.printStackTrace();
-			}
+		Connection con = null;
+		try{
+			if(!verifyAccess(username, password))
+				con = super.use(new SakuraDataAccess(getDriver(), getUrl(), username, password), false);
+			else
+				con = super.getPoolConnection();
+		}catch(ClassNotFoundException e){
+			e.printStackTrace();
 		}
-		return getConnection();
+		return con;
 	}
 	
 	public String getDriver() throws NullPointerException{
-		return this.sdp.getDriver();
+		return super.getDriver();
 	}
 
 	public void setDriver(String driver) throws NullPointerException{
-		this.sdp.setDriver(driver);
+		super.setDriver(driver);
 	}
 
 	public String getUrl() throws NullPointerException{
-		return this.sdp.getUrl();
+		return super.getUrl();
 	}
 	
 	public void setUrl(String url) throws NullPointerException{
-		this.sdp.setUrl(url);
+		super.setUrl(url);
 	}
 
 	public String getUsername() throws NullPointerException{
-		return this.sdp.getUsername();
+		return super.getUsername();
 	}
 	
 	public void setUsername(String username) throws NullPointerException{
-		this.sdp.setUsername(username);
+		super.setUsername(username);
 	}
 
 	public String getPassword() throws NullPointerException{
-		return this.sdp.getPassword();
+		return super.getPassword();
 	}
 
 	public void setPassword(String password) throws NullPointerException{
-		this.sdp.setPassword(password);
+		super.setPassword(password);
 	}
 
 	@Override
 	public int getLoginTimeout() throws SQLException, NullPointerException{
-		return this.sdp.getLoginTimeout();
+		return super.getLoginTimeout();
 	}
 
 	@Override
 	public void setLoginTimeout(int seconds) throws SQLException, NullPointerException{
-		this.sdp.setLoginTimeout(seconds);
+		super.setLoginTimeout(seconds);
 	}
 
 	@Override
 	public PrintWriter getLogWriter() throws SQLException, NullPointerException{
-		return this.sdp.getLogWriter();
+		return super.getLogWriter();
 	}
 
 	@Override
 	public void setLogWriter(PrintWriter out) throws SQLException, NullPointerException{
-		this.sdp.setLogWriter(out);
+		super.setLogWriter(out);
 	}
 
 	@Override
 	public Logger getParentLogger() throws SQLFeatureNotSupportedException, NullPointerException{
-		return this.sdp.getParentLogger();
+		return super.getParentLogger();
 	}
 
 	@Override

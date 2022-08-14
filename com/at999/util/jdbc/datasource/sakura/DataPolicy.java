@@ -2,6 +2,7 @@ package com.at999.util.jdbc.datasource.sakura;
 
 import com.at999.util.jdbc.datasource.sakura.policy.SakuraDataPolicy;
 import com.at999.util.jdbc.datasource.sakura.pool.SakuraRestrictedPool;
+import com.at999.util.jdbc.datasource.sakura.status.SakuraDataStatus;
 import java.util.HashMap;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -16,7 +17,10 @@ public interface DataPolicy{
 
 	default Connection executeOverNotFoundPolicy(DataAccessInfo info) throws ClassNotFoundException, SQLException{
 		SakuraRestrictedPool srp = info.getConnectionPool();
-		return pool.tagUsage(srp.getPoint(), cast(srp.wireConnection(srp.getPoint()), Connection.class), true);
+		DataAccess da = srp.getPoint();
+		Connection con = srp.wireConnection(da);
+		Connection proxy = srp.wireConnection(da, con);
+		return srp.tagUsage(da, proxy, new SakuraDataStatus(con), false);
 	}
 
 	default <T> T cast(Object o, Class<T> c){ return c.cast(o); }

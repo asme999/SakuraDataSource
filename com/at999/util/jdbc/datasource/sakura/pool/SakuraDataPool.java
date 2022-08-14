@@ -4,9 +4,11 @@ import com.at999.util.jdbc.datasource.sakura.DataPolicy;
 import com.at999.util.jdbc.datasource.sakura.DataAccess;
 import com.at999.util.jdbc.datasource.sakura.DataStatus;
 import com.at999.util.jdbc.datasource.sakura.DataAccessInfo;
+import com.at999.util.jdbc.datasource.sakura.info.SakuraDataAccessInfo;
 import com.at999.util.jdbc.datasource.sakura.status.SakuraDataStatus;
 import com.at999.util.jdbc.datasource.sakura.pool.SakuraRestrictedPool;
 import com.at999.util.jdbc.datasource.sakura.proxy.SakuraProxyConnection;
+import com.at999.util.jdbc.datasource.sakura.proxy.SakuraConnectionHandler;
 import java.sql.DriverManager;
 import java.sql.Connection;
 import java.util.HashMap;
@@ -44,45 +46,61 @@ public class SakuraDataPool implements DataAccess{
 			throw new NullPointerException();
 		this.pool.put(da, new HashMap<>());
 		da.getDataAccessInfo().getStartInitialzeTime();
-		for(int i = 0; i < size; i++)
-			if(tagUsage(da, wireConnection(da), new SakuraDataStatus()) == null)
-				throw new NullPointerException();
+		for(int i = 0; i < size; i++){
+			Connection con = wireConnection(da);
+			Connection proxy = wireConnection(da, con);
+			tagUsage(da, proxy, new SakuraDataStatus(con), true);
+		}
 		da.getDataAccessInfo().getFinishInitialzeTime();
 		da.getDataAccessInfo().setCount(size);
-		da.getDataAccessInfo().setConnectionPool(new SakuraRestrictedPool(da, this.pool.get(da)));
+		((SakuraDataAccessInfo)da.getDataAccessInfo()).setConnectionPool(new SakuraRestrictedPool(da, this.pool.get(da)));
 	}
 
-	public Connection tagUsage(DataAccess da, Connection con, boolean using){
-		if(da != null){
-			HashMap<Connection, Boolean> cm = this.pool.get(da); 
-			if(cm == null)
-				throw new NullPointerException();
-			if(con != null)
-				cm.put(con, using);
-			da.getDataAccessInfo().setCount(cm.size());
-		}
-		return con;
+	public Connection tagUsage(DataAccess da, Connection proxy, SakuraDataStatus sds, boolean available){
+		if(da == null || proxy == null || sds == null)
+			throw new NullPointerException();
+		HashMap<Connection, DataStatus> cm = this.pool.get(da); 
+		if(!cm.containsKey(proxy))
+			cm.put(proxy, sds);
+		sds.usable(available);
+		da.getDataAccessInfo().setCount(cm.size());
+		return proxy;
 	}
 
-	public Connection wireConnection(DataAccess da) throws NullPointerException, ClassNotFoundException, SQLException{
+	protected Connection wireConnection(DataAccess da, Connection con, boolean original)
+			throws NullPointerException, ClassNotFoundException, SQLException{
 		if(!da.isWired(true))
 			throw new SQLException();
-		return DriverManager.getConnection(da.getUrl(), da.getUsername(), da.getPassword());
+		if(con == null)
+			con = DriverManager.getConnection(da.getUrl(), da.getUsername(), da.getPassword());
+		if(original)
+			return con;
+		return SakuraProxyConnection.getConnection(con.getClass(), new SakuraConnectionHandler(con, da.getDataAccessInfo()));
 	}
 
-	public Connection wireConnection(DataAccess da, boolean original){
-		
+	public Connection wireConnection(DataAccess da, Connection originalConnection)
+			throws NullPointerException, ClassNotFoundException, SQLException{
+		return wireConnection(da, originalConnection, false);
 	}
 
-	public Connection getConnection(DataAccess da) throws NullPointerException, ClassNotFoundException, SQLException{
+	public Connection wireConnection(DataAccess da)
+			throws NullPointerException, ClassNotFoundException, SQLException{
+		return wireConnection(da, null, true);
+	}
+
+	public Connection getPoolConnection(DataAccess da) throws NullPointerException, ClassNotFoundException, SQLException{
 		if(da == null)
 			throw new NullPointerException();
 		da.getDataAccessInfo().push();
-		return tagUsage(da, use(da).findOver(da), true);
+/*
+		Connection con = use(da).findOver(da);
+		return tagUsage(da, con, this.pool.get(da).get(con), true);
+*/
+		return use(da, true);
 	}
 
-	public Connection getConnection() throws NullPointerException, ClassNotFoundException, SQLException{
-		return getConnection(this.point);
+	public Connection getPoolConnection() throws NullPointerException, ClassNotFoundException, SQLException{
+		return getPoolConnection(this.point);
 	}
 
 	public SakuraDataPool use(DataAccess da, int size, boolean direcation)
@@ -90,7 +108,7 @@ public class SakuraDataPool implements DataAccess{
 		if(this.point != da && direcation)
 			this.point = da;
 		if(!this.pool.containsKey(da))
-			if(!findAccess(da.getDriver(), da.getUrl(), da.getUsername(), null))
+			if(!findAccess(da.getDriver(), da.getUrl(), da.getUsername()))
 				initialPreconnect(da, size);
 		return this;
 	}
@@ -100,24 +118,45 @@ public class SakuraDataPool implements DataAccess{
 	}
 
 	public SakuraDataPool use(DataAccess da) throws NullPointerException, ClassNotFoundException, SQLException{
-		return use(da, da.getDefaultSize(), true);
+		return use(da, da.getDefaultSize());
 	}
 
 	public Connection use(DataAccess da, boolean direcation)
 			throws NullPointerException, ClassNotFoundException, SQLException{
-		return use(da, da.getDefaultSize(), direcation).tagUsage(da, findOver(da), true);
-	}
-
-	public DataAccess getPoint(){
-		return this.point;
-	}
-
-	public boolean isPoint(DataAccess da){
-		return this.point == da;
+		if(da == null)
+			throw new NullPointerException();
+		DataAccess oda = null;
+		Connection con = null;
+		SakuraDataStatus sds = null;
+/*
+		if(!this.pool.containsKey(da) && ){
+			con = use(da, da.getDefaultSize(), direcation).findOver(da);
+			if(con == null){
+				throw new ExceptionInInitializerError();
+			}
+			sds = (SakuraDataStatus)da.getDataAccessInfo().getConnectionPool().pool.get(da).get(con);
+		}
+		else{
+			con = findOver(oda);
+			sds = (SakuraDataStatus)this.pool.get(oda).get(con);
+		}
+*/
+		if(!this.pool.containsKey(da))
+			con = use(da, da.getDefaultSize(), direcation).findOver(da);
+		else
+			oda = getAccess(da.getDriver(), da.getUrl(), da.getUsername());
+		if(con == null){
+			if(oda == null)
+				throw new ExceptionInInitializerError();
+			else
+				con = findOver(oda);
+		}
+		sds = (SakuraDataStatus)da.getDataAccessInfo().getConnectionPool().pool.get(da).get(con);
+		return tagUsage(da, con, sds, false);
 	}
 
 	protected Connection findOver(DataAccess da) throws NullPointerException, ClassNotFoundException, SQLException{
-		HashMap<Connection, Boolean> pool = this.pool.get(da);
+		HashMap<Connection, DataStatus> pool = this.pool.get(da);
 		if(pool == null)
 			throw new NullPointerException();
 		Connection connection = null;
@@ -176,7 +215,7 @@ public class SakuraDataPool implements DataAccess{
 		return res;
 	}
 
-	public boolean findAccess(String driver, String url, String username, String password){
+	public boolean findAccess(String driver, String url, String username){
 		boolean and = true;
 		if(this.pool.isEmpty())
 			and = false;
@@ -185,13 +224,20 @@ public class SakuraDataPool implements DataAccess{
 				and = false;
 			if(and && url != null && !tda.getUrl().equals(url))
 				and = false;
-			if(and && username != null && !tda.getUsername().equals(username))
-				and = false;
-			if(and && password != null && !tda.getPassword().equals(password)){
+			if(and && username != null && !tda.getUsername().equals(username)){
 				and = false;
 			}
 		}
 		return and;
+	}
+
+	public DataAccess getAccess(String driver, String url, String username){
+		if(this.pool.isEmpty() || driver == null || url == null|| username == null)
+			return null;
+		for(DataAccess tda : this.pool.keySet())
+			if(tda.getDriver().equals(driver) && tda.getUrl().equals(url) && tda.getUsername().equals(username))
+				return tda;
+		return null;
 	}
 
 	@Override
@@ -204,6 +250,14 @@ public class SakuraDataPool implements DataAccess{
 	@Override
 	public boolean isWired(boolean register) throws ClassNotFoundException{
 		return this.point.isWired(register);
+	}
+
+	public DataAccess getPoint(){
+		return this.point;
+	}
+
+	public boolean isPoint(DataAccess da){
+		return this.point == da;
 	}
 
 	@Override

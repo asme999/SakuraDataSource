@@ -70,7 +70,7 @@ public class SakuraDataAccessInfo implements DataAccessInfo{
 	}
 
 /*
-	@override
+	@Override
 	public HashMap<Connection, DataStatus> getConnectionPool(){
 		return this.connectionPool;
 	}
@@ -80,8 +80,8 @@ public class SakuraDataAccessInfo implements DataAccessInfo{
 	}
 */
 	
-	@override
-	public SakuraRestricted getConnectionPool(){
+	@Override
+	public SakuraRestrictedPool getConnectionPool(){
 		return this.connectionPool;
 	}
 

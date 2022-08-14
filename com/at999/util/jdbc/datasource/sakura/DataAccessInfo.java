@@ -2,6 +2,7 @@ package com.at999.util.jdbc.datasource.sakura;
 
 import com.at999.util.jdbc.datasource.sakura.DataAccess;
 import com.at999.util.jdbc.datasource.sakura.DataStatus;
+import com.at999.util.jdbc.datasource.sakura.pool.SakuraRestrictedPool;
 import java.util.LinkedList;
 import java.sql.Connection;
 

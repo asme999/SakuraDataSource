@@ -2,6 +2,7 @@ package com.at999.util.jdbc.datasource.sakura.status;
 
 import com.at999.util.jdbc.datasource.sakura.DataStatus;
 import java.sql.Connection;
+import java.sql.SQLException;
 
 public class SakuraDataStatus implements DataStatus{
 
@@ -17,12 +18,12 @@ public class SakuraDataStatus implements DataStatus{
 	}
 
 	@Override
-	public boolean transaction(){
+	public boolean transaction() throws SQLException{
 		return this.originalConnection.getAutoCommit() && false;
 	}
 
 	@Override
-	public boolean nonTransaction(){
+	public boolean nonTransaction() throws SQLException{
 		return this.originalConnection.getAutoCommit() && true;
 	}
 
@@ -36,7 +37,7 @@ public class SakuraDataStatus implements DataStatus{
 	}
 
 	@Override
-	public void close(){
+	public void close() throws SQLException{
 		this.originalConnection.close();
 	}
 

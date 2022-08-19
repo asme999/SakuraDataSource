@@ -6,21 +6,21 @@ public interface DataAccess extends CommonDataSource{
 
 	boolean isWired(boolean register) throws ClassNotFoundException;
 
-	String getDriver() throws NullPointerException;
+	String getDriver();
 
-	void setDriver(String driver) throws NullPointerException;
+	void setDriver(String driver);
 
-	String getUrl() throws NullPointerException;
+	String getUrl();
 
-	void setUrl(String url) throws NullPointerException;
+	void setUrl(String url);
 
-	String getUsername() throws NullPointerException;
+	String getUsername();
 
-	void setUsername(String username) throws NullPointerException;
+	void setUsername(String username);
 
-	String getPassword() throws NullPointerException;
+	String getPassword();
 
-	void setPassword(String password) throws NullPointerException;
+	void setPassword(String password);
 
 	int getDefaultSize();
 

@@ -4,6 +4,7 @@ import com.at999.util.jdbc.datasource.sakura.DataPolicy;
 import com.at999.util.jdbc.datasource.sakura.DataAccess;
 import com.at999.util.jdbc.datasource.sakura.DataStatus;
 import com.at999.util.jdbc.datasource.sakura.DataAccessInfo;
+import com.at999.util.jdbc.datasource.sakura.access.SakuraDataAccess;
 import com.at999.util.jdbc.datasource.sakura.info.SakuraDataAccessInfo;
 import com.at999.util.jdbc.datasource.sakura.status.SakuraDataStatus;
 import com.at999.util.jdbc.datasource.sakura.pool.SakuraRestrictedPool;
@@ -24,7 +25,7 @@ public class SakuraDataPool implements DataAccess{
 	protected DataAccess point;
 
 	public SakuraDataPool(){
-		init();
+		init(new SakuraDataAccess());
 	}
 
 	public SakuraDataPool(DataAccess da){
@@ -40,8 +41,7 @@ public class SakuraDataPool implements DataAccess{
 		init();
 	}
 
-	protected void initialPreconnect(DataAccess da, int size) 
-			throws NullPointerException, ClassNotFoundException, SQLException{
+	protected void initialPreconnect(DataAccess da, int size) throws ClassNotFoundException, SQLException{
 		if(da == null)
 			throw new NullPointerException();
 		this.pool.put(da, new HashMap<>());
@@ -68,7 +68,7 @@ public class SakuraDataPool implements DataAccess{
 	}
 
 	protected Connection wireConnection(DataAccess da, Connection con, boolean original)
-			throws NullPointerException, ClassNotFoundException, SQLException{
+			throws ClassNotFoundException, SQLException{
 		if(!da.isWired(true))
 			throw new SQLException();
 		if(con == null)
@@ -79,32 +79,26 @@ public class SakuraDataPool implements DataAccess{
 	}
 
 	public Connection wireConnection(DataAccess da, Connection originalConnection)
-			throws NullPointerException, ClassNotFoundException, SQLException{
+			throws ClassNotFoundException, SQLException{
 		return wireConnection(da, originalConnection, false);
 	}
 
-	public Connection wireConnection(DataAccess da)
-			throws NullPointerException, ClassNotFoundException, SQLException{
+	public Connection wireConnection(DataAccess da) throws ClassNotFoundException, SQLException{
 		return wireConnection(da, null, true);
 	}
 
-	public Connection getPoolConnection(DataAccess da) throws NullPointerException, ClassNotFoundException, SQLException{
+	public Connection getPoolConnection(DataAccess da) throws ClassNotFoundException, SQLException{
 		if(da == null)
 			throw new NullPointerException();
 		da.getDataAccessInfo().push();
-/*
-		Connection con = use(da).findOver(da);
-		return tagUsage(da, con, this.pool.get(da).get(con), true);
-*/
 		return use(da, true);
 	}
 
-	public Connection getPoolConnection() throws NullPointerException, ClassNotFoundException, SQLException{
+	public Connection getPoolConnection() throws ClassNotFoundException, SQLException{
 		return getPoolConnection(this.point);
 	}
 
-	public SakuraDataPool use(DataAccess da, int size, boolean direcation)
-			throws NullPointerException, ClassNotFoundException, SQLException{
+	public SakuraDataPool use(DataAccess da, int size, boolean direcation) throws ClassNotFoundException, SQLException{
 		if(this.point != da && direcation)
 			this.point = da;
 		if(!this.pool.containsKey(da))
@@ -113,34 +107,20 @@ public class SakuraDataPool implements DataAccess{
 		return this;
 	}
 
-	public SakuraDataPool use(DataAccess da, int size) throws NullPointerException, ClassNotFoundException, SQLException{
+	public SakuraDataPool use(DataAccess da, int size) throws ClassNotFoundException, SQLException{
 		return use(da, size, true);
 	}
 
-	public SakuraDataPool use(DataAccess da) throws NullPointerException, ClassNotFoundException, SQLException{
+	public SakuraDataPool use(DataAccess da) throws ClassNotFoundException, SQLException{
 		return use(da, da.getDefaultSize());
 	}
 
-	public Connection use(DataAccess da, boolean direcation)
-			throws NullPointerException, ClassNotFoundException, SQLException{
+	public Connection use(DataAccess da, boolean direcation) throws ClassNotFoundException, SQLException{
 		if(da == null)
 			throw new NullPointerException();
 		DataAccess oda = null;
 		Connection con = null;
 		SakuraDataStatus sds = null;
-/*
-		if(!this.pool.containsKey(da) && ){
-			con = use(da, da.getDefaultSize(), direcation).findOver(da);
-			if(con == null){
-				throw new ExceptionInInitializerError();
-			}
-			sds = (SakuraDataStatus)da.getDataAccessInfo().getConnectionPool().pool.get(da).get(con);
-		}
-		else{
-			con = findOver(oda);
-			sds = (SakuraDataStatus)this.pool.get(oda).get(con);
-		}
-*/
 		if(!this.pool.containsKey(da))
 			con = use(da, da.getDefaultSize(), direcation).findOver(da);
 		else
@@ -155,7 +135,7 @@ public class SakuraDataPool implements DataAccess{
 		return tagUsage(da, con, sds, false);
 	}
 
-	protected Connection findOver(DataAccess da) throws NullPointerException, ClassNotFoundException, SQLException{
+	protected Connection findOver(DataAccess da) throws ClassNotFoundException, SQLException{
 		HashMap<Connection, DataStatus> pool = this.pool.get(da);
 		if(pool == null)
 			throw new NullPointerException();
@@ -175,7 +155,7 @@ public class SakuraDataPool implements DataAccess{
 		return connection;
 	}
 
-	public boolean verifyAccess(String username, String password) throws NullPointerException{
+	public boolean verifyAccess(String username, String password){
 		if(username == null || password == null)
 			throw new NullPointerException();
 		return verifyAccess(null, null, username, password);
@@ -198,8 +178,7 @@ public class SakuraDataPool implements DataAccess{
 		return verifyAccess(da.getDriver(), da.getUrl(), da.getUsername(), da.getPassword());
 	}
 
-	public boolean verifyAccess(DataAccess da, boolean together)
-			throws NullPointerException, ClassNotFoundException, SQLException{
+	public boolean verifyAccess(DataAccess da, boolean together) throws ClassNotFoundException, SQLException{
 		if(da == null)
 			throw new NullPointerException();
 		boolean res = true;
@@ -281,67 +260,67 @@ public class SakuraDataPool implements DataAccess{
 	}
 
 	@Override
-	public String getDriver() throws NullPointerException{
+	public String getDriver(){
 		return this.point.getDriver();
 	}
 
 	@Override
-	public void setDriver(String driver) throws NullPointerException{
+	public void setDriver(String driver){
 		this.point.setDriver(driver);
 	}
 
 	@Override
-	public String getUrl() throws NullPointerException{
+	public String getUrl(){
 		return this.point.getUrl();
 	}
 	
 	@Override
-	public void setUrl(String url) throws NullPointerException{
+	public void setUrl(String url){
 		this.point.setUrl(url);
 	}
 
 	@Override
-	public String getUsername() throws NullPointerException{
+	public String getUsername(){
 		return this.point.getUsername();
 	}
 	
 	@Override
-	public void setUsername(String username) throws NullPointerException{
+	public void setUsername(String username){
 		this.point.setUsername(username);
 	}
 
 	@Override
-	public String getPassword() throws NullPointerException{
+	public String getPassword(){
 		return this.point.getPassword();
 	}
 
 	@Override
-	public void setPassword(String password) throws NullPointerException{
+	public void setPassword(String password){
 		this.point.setPassword(password);
 	}
 
 	@Override
-	public int getLoginTimeout() throws SQLException, NullPointerException{
+	public int getLoginTimeout() throws SQLException{
 		return this.point.getLoginTimeout();
 	}
 
 	@Override
-	public void setLoginTimeout(int seconds) throws SQLException, NullPointerException{
+	public void setLoginTimeout(int seconds) throws SQLException{
 		this.point.setLoginTimeout(seconds);
 	}
 
 	@Override
-	public PrintWriter getLogWriter() throws SQLException, NullPointerException{
+	public PrintWriter getLogWriter() throws SQLException{
 		return this.point.getLogWriter();
 	}
 
 	@Override
-	public void setLogWriter(PrintWriter out) throws SQLException, NullPointerException{
+	public void setLogWriter(PrintWriter out) throws SQLException{
 		this.point.setLogWriter(out);
 	}
 
 	@Override
-	public Logger getParentLogger() throws SQLFeatureNotSupportedException, NullPointerException{
+	public Logger getParentLogger() throws SQLFeatureNotSupportedException{
 		return this.point.getParentLogger();
 	}
 

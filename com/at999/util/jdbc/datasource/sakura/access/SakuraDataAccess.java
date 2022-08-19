@@ -91,7 +91,7 @@ public class SakuraDataAccess implements DataAccess{
 	}
 
 	@Override
-	public String getDriver() throws NullPointerException{
+	public String getDriver(){
 		return this.driver;
 	}
 
@@ -100,7 +100,7 @@ public class SakuraDataAccess implements DataAccess{
 	}
 
 	@Override
-	public String getUrl() throws NullPointerException{
+	public String getUrl(){
 		return this.url;
 	}
 	
@@ -109,7 +109,7 @@ public class SakuraDataAccess implements DataAccess{
 	}
 
 	@Override
-	public String getUsername() throws NullPointerException{
+	public String getUsername(){
 		return this.username;
 	}
 	
@@ -118,7 +118,7 @@ public class SakuraDataAccess implements DataAccess{
 	}
 
 	@Override
-	public String getPassword() throws NullPointerException{
+	public String getPassword(){
 		return this.password;
 	}
 

@@ -17,11 +17,11 @@ public class SakuraDataAccessInfo implements DataAccessInfo{
 //	private HashMap<Connection, DataStatus> connectionPool;
 	private SakuraRestrictedPool connectionPool;
 
-	public SakuraDataAccessInfo(DataAccess da) throws NullPointerException{
+	public SakuraDataAccessInfo(DataAccess da){
 		init(da);
 	}
 
-	private void init(DataAccess da) throws NullPointerException{
+	private void init(DataAccess da){
 		if(da == null)
 			throw new NullPointerException();
 		this.createTime = System.currentTimeMillis();

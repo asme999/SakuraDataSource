@@ -27,6 +27,15 @@ public class SakuraDataAccess implements DataAccess{
 	private PrintWriter logWriter;
 	private Logger logger;
 
+	@Override
+	public String toString(){
+		return "connectInfo { " +
+			"driver: " + this.driver +
+			",url: " + this.url + 
+			",username: " + this.username +
+			"password: " + this.password +
+			"}";
+	}
 
 	public SakuraDataAccess(){
 		init();
@@ -50,7 +59,7 @@ public class SakuraDataAccess implements DataAccess{
 		this.username = username;
 		this.password = password;
 		init();
-		if(isWired(true)){
+		if(isWired(false)){
 			Class.forName(this.driver);
 		}
 	}

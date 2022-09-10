@@ -32,13 +32,9 @@ public class SakuraDataPool implements DataAccess{
 		init(da);
 	}
 	
-	protected void init(){
-		this.pool = new HashMap<>();
-	}
-
 	protected void init(DataAccess da){
 		this.point = da;
-		init();
+		this.pool = new HashMap<>();
 	}
 
 	protected void initialPreconnect(DataAccess da, int size) throws ClassNotFoundException, SQLException{

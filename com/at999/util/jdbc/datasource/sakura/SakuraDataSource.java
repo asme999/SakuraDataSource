@@ -11,59 +11,33 @@ import java.sql.SQLFeatureNotSupportedException;
 
 public class SakuraDataSource extends SakuraDataPool implements DataSource{
 
-//	private SakuraDataPool sdp;
-	
-	public SakuraDataSource(){
-			super.init();
+	public SakuraDataSource() throws ClassNotFoundException{
+		super();
 	}
 
-	public SakuraDataSource(DataAccess da){
+	public SakuraDataSource(DataAccess da) throws ClassNotFoundException{
+		super(da);
+	}
+
+	public SakuraDataSource(String driver, String url, String username, String password) throws ClassNotFoundException{
+		super(new SakuraDataAccess(driver, url, username, password));
+	}
+
+	public Connection getConnection(DataAccess da) throws SQLException{
 		try{
-			super.init(da);
+			return use(da, false);
 		}catch(Exception e){
-			e.printStackTrace();
+			throw new SQLException(e);
 		}
-	}
-
-	public SakuraDataSource(String driver, String url, String username, String password){
-		try{
-			super.init(new SakuraDataAccess(driver, url, username, password));
-		}catch(Exception e){
-			e.printStackTrace();
-		}
-	}
-
-/*
-	private void init(DataAccess da){
-		this.sdp = new SakuraDataPool(da);
-	}
-
-	private void init(){
-		init(new SakuraDataAccess());
-	}
-
-	public DataAccess currentDataAccess(){
-		return super.getPoint();
-	}
-
-	public boolean isHere(DataAccess da){
-		return super.isPoint(da);
-	}
-*/
-
-	public Connection getConnection(DataAccess da) throws ClassNotFoundException, SQLException{
-		return super.use(da, false);
 	}
 
 	@Override
 	public Connection getConnection() throws SQLException{
-		Connection con = null;
 		try{
-			con = super.getPoolConnection();
-		}catch(ClassNotFoundException e){
-			e.printStackTrace();
+			return getPoolConnection();
+		}catch(Exception e){
+			throw new SQLException(e);
 		}
-		return con;
 	}
 
 	@Override
@@ -71,11 +45,11 @@ public class SakuraDataSource extends SakuraDataPool implements DataSource{
 		Connection con = null;
 		try{
 			if(!verifyAccess(username, password))
-				con = super.use(new SakuraDataAccess(getDriver(), getUrl(), username, password), false);
+				con = use(new SakuraDataAccess(getDriver(), getUrl(), username, password), false);
 			else
-				con = super.getPoolConnection();
-		}catch(ClassNotFoundException e){
-			e.printStackTrace();
+				con = getPoolConnection();
+		}catch(Exception e){
+			throw new SQLException(e);
 		}
 		return con;
 	}

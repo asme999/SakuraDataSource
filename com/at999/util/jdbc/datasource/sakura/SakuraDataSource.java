@@ -11,15 +11,15 @@ import java.sql.SQLFeatureNotSupportedException;
 
 public class SakuraDataSource extends SakuraDataPool implements DataSource{
 
-	public SakuraDataSource() throws ClassNotFoundException{
+	public SakuraDataSource(){
 		super();
 	}
 
-	public SakuraDataSource(DataAccess da) throws ClassNotFoundException{
+	public SakuraDataSource(DataAccess da){
 		super(da);
 	}
 
-	public SakuraDataSource(String driver, String url, String username, String password) throws ClassNotFoundException{
+	public SakuraDataSource(String driver, String url, String username, String password){
 		super(new SakuraDataAccess(driver, url, username, password));
 	}
 

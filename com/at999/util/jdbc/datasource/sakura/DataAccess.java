@@ -4,7 +4,7 @@ import javax.sql.CommonDataSource;
 
 public interface DataAccess extends CommonDataSource{
 
-	boolean isWired(boolean register) throws ClassNotFoundException;
+	boolean isWired(boolean register);
 
 	String getDriver();
 

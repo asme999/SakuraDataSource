@@ -37,7 +37,7 @@ public class SakuraDataPool implements DataAccess{
 		this.pool = new HashMap<>();
 	}
 
-	protected void initialPreconnect(DataAccess da, int size) throws ClassNotFoundException, SQLException{
+	protected void initialPreconnect(DataAccess da, int size) throws SQLException{
 		if(da == null)
 			throw new NullPointerException();
 		this.pool.put(da, new HashMap<>());
@@ -63,8 +63,7 @@ public class SakuraDataPool implements DataAccess{
 		return proxy;
 	}
 
-	protected Connection wireConnection(DataAccess da, Connection con, boolean original)
-			throws ClassNotFoundException, SQLException{
+	protected Connection wireConnection(DataAccess da, Connection con, boolean original) throws SQLException{
 		if(!da.isWired(true))
 			throw new SQLException();
 		if(con == null)
@@ -74,27 +73,26 @@ public class SakuraDataPool implements DataAccess{
 		return SakuraProxyConnection.getConnection(con.getClass(), new SakuraConnectionHandler(con, da.getDataAccessInfo()));
 	}
 
-	public Connection wireConnection(DataAccess da, Connection originalConnection)
-			throws ClassNotFoundException, SQLException{
+	public Connection wireConnection(DataAccess da, Connection originalConnection) throws SQLException{
 		return wireConnection(da, originalConnection, false);
 	}
 
-	public Connection wireConnection(DataAccess da) throws ClassNotFoundException, SQLException{
+	public Connection wireConnection(DataAccess da) throws SQLException{
 		return wireConnection(da, null, true);
 	}
 
-	public Connection getPoolConnection(DataAccess da) throws ClassNotFoundException, SQLException{
+	public Connection getPoolConnection(DataAccess da) throws SQLException{
 		if(da == null)
 			throw new NullPointerException();
 		da.getDataAccessInfo().push();
 		return use(da, true);
 	}
 
-	public Connection getPoolConnection() throws ClassNotFoundException, SQLException{
+	public Connection getPoolConnection() throws SQLException{
 		return getPoolConnection(this.point);
 	}
 
-	public SakuraDataPool use(DataAccess da, int size, boolean direcation) throws ClassNotFoundException, SQLException{
+	public SakuraDataPool use(DataAccess da, int size, boolean direcation) throws SQLException{
 		if(this.point != da && direcation)
 			this.point = da;
 		if(!this.pool.containsKey(da))
@@ -103,15 +101,15 @@ public class SakuraDataPool implements DataAccess{
 		return this;
 	}
 
-	public SakuraDataPool use(DataAccess da, int size) throws ClassNotFoundException, SQLException{
+	public SakuraDataPool use(DataAccess da, int size) throws SQLException{
 		return use(da, size, true);
 	}
 
-	public SakuraDataPool use(DataAccess da) throws ClassNotFoundException, SQLException{
+	public SakuraDataPool use(DataAccess da) throws SQLException{
 		return use(da, da.getDefaultSize());
 	}
 
-	public Connection use(DataAccess da, boolean direcation) throws ClassNotFoundException, SQLException{
+	public Connection use(DataAccess da, boolean direcation) throws SQLException{
 		if(da == null)
 			throw new NullPointerException();
 		DataAccess oda = null;
@@ -131,7 +129,7 @@ public class SakuraDataPool implements DataAccess{
 		return tagUsage(da, con, sds, false);
 	}
 
-	protected Connection findOver(DataAccess da) throws ClassNotFoundException, SQLException{
+	protected Connection findOver(DataAccess da) throws SQLException{
 		HashMap<Connection, DataStatus> pool = this.pool.get(da);
 		if(pool == null)
 			throw new NullPointerException();
@@ -174,7 +172,7 @@ public class SakuraDataPool implements DataAccess{
 		return verifyAccess(da.getDriver(), da.getUrl(), da.getUsername(), da.getPassword());
 	}
 
-	public boolean verifyAccess(DataAccess da, boolean together) throws ClassNotFoundException, SQLException{
+	public boolean verifyAccess(DataAccess da, boolean together) throws SQLException{
 		if(da == null)
 			throw new NullPointerException();
 		boolean res = true;
@@ -223,7 +221,7 @@ public class SakuraDataPool implements DataAccess{
 	public void close(){}
 
 	@Override
-	public boolean isWired(boolean register) throws ClassNotFoundException{
+	public boolean isWired(boolean register){
 		return this.point.isWired(register);
 	}
 

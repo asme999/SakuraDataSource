@@ -4,7 +4,6 @@ import com.at999.util.jdbc.datasource.sakura.DataAccess;
 import com.at999.util.jdbc.datasource.sakura.DataAccessInfo;
 import com.at999.util.jdbc.datasource.sakura.pool.SakuraRestrictedPool;
 import java.util.LinkedList;
-//import java.sql.Connection;
 
 public class SakuraDataAccessInfo implements DataAccessInfo{
 
@@ -14,7 +13,6 @@ public class SakuraDataAccessInfo implements DataAccessInfo{
 	private long startInitialzeTime;
 	private long finishInitialzeTime;
 	private int count;
-//	private HashMap<Connection, DataStatus> connectionPool;
 	private SakuraRestrictedPool connectionPool;
 
 	public SakuraDataAccessInfo(DataAccess da){
@@ -69,17 +67,6 @@ public class SakuraDataAccessInfo implements DataAccessInfo{
 		return this.count;
 	}
 
-/*
-	@Override
-	public HashMap<Connection, DataStatus> getConnectionPool(){
-		return this.connectionPool;
-	}
-
-	public void setConnectionPool(HashMap<Connection, DataStatus> connectionPool){
-		this.connectionPool = connectionPool;
-	}
-*/
-	
 	@Override
 	public SakuraRestrictedPool getConnectionPool(){
 		return this.connectionPool;

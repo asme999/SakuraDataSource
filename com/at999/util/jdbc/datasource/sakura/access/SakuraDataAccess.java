@@ -5,6 +5,7 @@ import com.at999.util.jdbc.datasource.sakura.policy.SakuraDataPolicy;
 import com.at999.util.jdbc.datasource.sakura.DataAccess;
 import com.at999.util.jdbc.datasource.sakura.DataAccessInfo;
 import com.at999.util.jdbc.datasource.sakura.info.SakuraDataAccessInfo;
+import com.at999.util.jdbc.datasource.sakura.access.InitializationException;
 import java.util.logging.Logger;
 import java.io.PrintWriter;
 import java.sql.SQLException;
@@ -41,7 +42,7 @@ public class SakuraDataAccess implements DataAccess{
 		init();
 	}
 
-	public SakuraDataAccess(String driver, String url, String username, String password) throws ClassNotFoundException{
+	public SakuraDataAccess(String driver, String url, String username, String password){
 		init(driver, url, username, password);
 	}
 
@@ -53,24 +54,31 @@ public class SakuraDataAccess implements DataAccess{
 		}
 	}
 
-	public void init(String driver, String url, String username, String password) throws ClassNotFoundException{
+	public void init(String driver, String url, String username, String password){
 		this.driver = driver;
 		this.url = url;
 		this.username = username;
 		this.password = password;
 		init();
-		if(isWired(false)){
-			Class.forName(this.driver);
+		if(!isWired(true)){
+			if(isWired(false)){
+				throw new InitializationException("Attempt to initialize '" + this.driver + "' does not exist !");
+			}
 		}
 	}
 
 	@Override
-	public boolean isWired(boolean register) throws ClassNotFoundException{
+	public boolean isWired(boolean register){
 		if(this.driver == null || this.url == null
 				|| this.username == null || this.password == null)
 			return false;
-		if(register)
-			Class.forName(this.driver);
+		if(register){
+			try{
+				Class.forName(this.driver);
+			}catch(ClassNotFoundException e){
+				return false;
+			}
+		}
 		return true;
 	}
 

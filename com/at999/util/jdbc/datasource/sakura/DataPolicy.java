@@ -15,7 +15,7 @@ public interface DataPolicy{
 
 	default void executePostGetPolicy(DataAccessInfo info){}
 
-	default Connection executeOverNotFoundPolicy(DataAccessInfo info) throws ClassNotFoundException, SQLException{
+	default Connection executeOverNotFoundPolicy(DataAccessInfo info) throws SQLException{
 		SakuraRestrictedPool srp = info.getConnectionPool();
 		DataAccess da = srp.getPoint();
 		Connection con = srp.wireConnection(da);
